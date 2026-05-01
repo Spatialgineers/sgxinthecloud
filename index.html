@@ -8,11 +8,9 @@
     <style>
         :root {
             --font-main: 'Orbitron', sans-serif;
-            --ui-glass: rgba(255, 255, 255, 0.15);
+            --ui-glass: rgba(255, 255, 255, 0.1);
             --ui-border: rgba(255, 255, 255, 0.3);
-            --ui-dark: rgba(10, 10, 25, 0.6);
-            --neon-green: #00ff41;
-            --neon-blue: #0ff;
+            --ui-dark: rgba(0, 0, 0, 0.55);
             --stigma-red: #ff3131;
         }
 
@@ -30,128 +28,175 @@
             background-position: center;
         }
 
-        /* CAPAS GLOBALES */
+        /* CAPAS GLOBALES DE FONDO */
         #bg-clouds-container { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 1; pointer-events: none; overflow: hidden; }
         
         #banner-bottom {
             position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
             width: 100%; max-width: 400px; z-index: 50; pointer-events: none;
         }
-        
-        #nube-top {
+
+        /* CAPA DE NUBES TOP (AHORA LOCALIZADA DENTRO DE CADA SCREEN) */
+        .nube-top-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 120px;
             background-image: url('https://static.wixstatic.com/media/fe81a7_18e8be615d794f9b86f710a38ec33be3~mv2.png');
-            background-size: cover; background-position: bottom; z-index: 15; pointer-events: none;
+            background-size: cover; background-position: bottom; pointer-events: none; z-index: 5;
         }
 
         /* STATE MACHINE */
-        .screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        .screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 10; }
         .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-        /* UI & BUTTONS */
-        h1 { color: white; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); text-align: center; margin-bottom: 20px; font-size: 2.2rem; font-weight: 900;}
-        p { text-align: center; margin-bottom: 20px; font-weight: bold; }
+        /* UI & BUTTONS MONOCROMÁTICOS (PREMIUM GLASSMORPHISM) */
+        h1 { color: white; text-shadow: 0 0 12px rgba(255,255,255,0.4); text-align: center; margin-bottom: 15px; font-size: 2.2rem; font-weight: 900;}
+        p { text-align: center; margin-bottom: 20px; font-weight: 400; line-height: 1.5; font-size: 0.95rem; color: #f0f0f0;}
         
         .btn {
             background: var(--ui-glass); border: 1px solid var(--ui-border); color: white;
-            padding: 15px; margin: 10px; font-size: 1.1rem; font-family: var(--font-main); font-weight: 700;
-            cursor: pointer; border-radius: 50px; transition: transform 0.1s, background 0.2s; width: 85%; max-width: 320px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            z-index: 9999;
+            padding: 15px; margin: 8px; font-size: 1rem; font-family: var(--font-main); font-weight: 700;
+            cursor: pointer; border-radius: 50px; transition: all 0.2s ease; width: 90%; max-width: 320px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            z-index: 10;
         }
-        .btn:active { transform: scale(0.95); background: rgba(255,255,255,0.3); }
-        .btn-action { background: rgba(0, 255, 65, 0.2); border-color: var(--neon-green); color: var(--neon-green); }
-        .btn-action:active { background: var(--neon-green); color: black; }
-        
-        /* HUD - Z-INDEX ABSOLUTO */
-        .hud { position: absolute; top: 20px; left: 0; width: 100%; padding: 0 20px; display: flex; justify-content: space-between; z-index: 99999; pointer-events: none; }
-        .hud-box { background: var(--ui-dark); backdrop-filter: blur(5px); border: 1px solid var(--ui-border); padding: 5px 15px; color: white; font-weight: 700; border-radius: 20px; text-shadow: 1px 1px 3px black;}
-        .lives { color: var(--stigma-red); font-size: 1.2rem; letter-spacing: 2px; }
+        .btn:active { transform: scale(0.95); background: rgba(255,255,255,0.3); color: white; }
 
-        /* ANIMACIONES DE NUBES */
+        .menu-grid { display: flex; flex-direction: column; align-items: center; width: 100%; z-index: 10; }
+        .menu-row { display: flex; width: 90%; max-width: 350px; justify-content: space-between; }
+        .menu-row .btn { width: 48%; font-size: 0.8rem; padding: 12px 5px;}
+
+        /* HUD - SIEMPRE AL FRENTE DE TODO EN LA PANTALLA */
+        .hud { position: absolute; top: 15px; left: 0; width: 100%; padding: 0 20px; display: flex; justify-content: space-between; z-index: 20; pointer-events: none; }
+        .hud-box { background: var(--ui-dark); backdrop-filter: blur(5px); border: 1px solid var(--ui-border); padding: 5px 12px; color: white; font-weight: 700; border-radius: 20px; text-shadow: 1px 1px 3px black; font-size: 0.9rem;}
+        .lives { color: var(--stigma-red); letter-spacing: 2px; }
+
+        /* ANIMACIONES DE NUBES FLOTANTES */
         .menu-cloud { position: absolute; opacity: 0.85; animation: float linear infinite; pointer-events: none; }
         @keyframes float { from { transform: translateX(120vw); } to { transform: translateX(-50vw); } }
 
+        /* PANELES DE LECTURA (INTRO, INSTRUCCIONES, GLOSARIO) */
+        .glass-panel {
+            background: var(--ui-glass); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 30px 25px; border-radius: 25px; text-align: center; border: 1px solid var(--ui-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 90%; max-width: 400px; z-index: 10;
+            max-height: 80vh; overflow-y: auto; pointer-events: auto; touch-action: pan-y;
+        }
+        
+        .glass-panel::-webkit-scrollbar { width: 6px; }
+        .glass-panel::-webkit-scrollbar-track { background: transparent; }
+        .glass-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+
+        /* GLOSARIO GRID */
+        .glossary-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; margin-bottom: 20px; }
+        .terpene-card {
+            background: rgba(0,0,0,0.6); border: 1px solid var(--ui-border); border-radius: 15px;
+            padding: 15px; display: flex; align-items: center; text-align: left; transition: all 0.3s ease;
+        }
+        .terpene-card img { width: 50px; height: 50px; margin-right: 15px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
+        .terpene-card h3 { font-size: 1.1rem; margin-bottom: 5px; text-shadow: 1px 1px 2px black;}
+        .terpene-card p { margin: 2px 0; font-size: 0.75rem; color: #ddd; text-align: left; line-height: 1.2;}
+        .t-savior { font-weight: bold; font-size: 0.8rem; margin-top: 5px; display: inline-block; text-shadow: 1px 1px 2px black;}
+
         /* JUEGO 1: SMOKE OUT */
-        #smokeout-area { width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden; pointer-events: auto; z-index: 10; }
+        #smokeout-area { width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden; pointer-events: auto; z-index: 1; }
         .cloud-target {
             position: absolute; width: 120px; height: 80px; display: flex; align-items: center; justify-content: center;
             font-weight: 900; color: white; -webkit-text-stroke: 1px black; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1rem;
             transition: transform 0.1s;
         }
-        .cloud-mask {
-            position: absolute; top:0; left:0; width: 100%; height: 100%; z-index: -1;
-            -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
-            opacity: 0.9;
-        }
-        .stigma-hazard {
-            position: absolute; width: 70px; height: 70px;
-            background-image: url('https://static.wixstatic.com/media/fe81a7_5670a65700584faa86f361573ecbf1f1~mv2.png');
-            background-size: contain; background-repeat: no-repeat;
-        }
-        .pop-text { position: absolute; font-weight: 900; font-size: 1.1rem; pointer-events: none; -webkit-text-stroke: 0.5px black; text-shadow: 0 0 5px black; animation: rise 1s ease-out forwards; text-align: center; width: 180px; left: -30px; z-index: 9999;}
+        .cloud-mask { position: absolute; top:0; left:0; width: 100%; height: 100%; z-index: -1; -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; opacity: 0.9; }
+        .stigma-hazard { position: absolute; width: 70px; height: 70px; background-image: url('https://static.wixstatic.com/media/fe81a7_5670a65700584faa86f361573ecbf1f1~mv2.png'); background-size: contain; background-repeat: no-repeat; }
+        .pop-text { position: absolute; font-weight: 900; font-size: 1.1rem; pointer-events: none; -webkit-text-stroke: 0.5px black; text-shadow: 0 0 5px black; animation: rise 1s ease-out forwards; text-align: center; width: 180px; left: -30px; z-index: 20;}
         @keyframes rise { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
 
         /* JUEGO 2: HARVEST */
-        #canvas-harvest { width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 10;}
+        #canvas-harvest { width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1;}
 
         /* JUEGO 3: TRIVIA */
         #trivia-container { 
             width: 90%; max-width: 400px; background: var(--ui-glass); backdrop-filter: blur(10px); border: 1px solid var(--ui-border);
-            padding: 30px 20px; border-radius: 20px; min-height: 300px; display: flex; flex-direction: column; justify-content: center; z-index: 9999;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            padding: 30px 20px; border-radius: 20px; min-height: 300px; display: flex; flex-direction: column; justify-content: center; z-index: 10;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); pointer-events: auto;
         }
-        #question-text { 
-            font-size: 1.3rem; margin-bottom: 20px; color: white; font-weight: 900; text-align: center; 
-            -webkit-text-stroke: 1px black; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        }
-        .pill-btn {
-            display: flex; align-items: center; background: rgba(0,0,0,0.5); border: 1px solid var(--ui-border); border-radius: 50px;
-            padding: 8px 15px; margin: 10px 0; color: white; font-weight: 700; cursor: pointer; transition: 0.1s;
-        }
+        #question-text { font-size: 1.2rem; margin-bottom: 20px; color: white; font-weight: 900; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        .pill-btn { display: flex; align-items: center; background: rgba(0,0,0,0.5); border: 1px solid var(--ui-border); border-radius: 50px; padding: 8px 15px; margin: 10px 0; color: white; font-weight: 700; cursor: pointer; transition: 0.1s; }
         .pill-btn img { width: 40px; height: 40px; margin-right: 15px; }
-        .pill-btn:active { transform: scale(0.95); border-color: var(--neon-green); background: rgba(0,255,65,0.2); }
-
-        /* GAME OVER OVERLAY */
-        .glass-panel {
-            background: var(--ui-glass); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            padding: 40px 30px; border-radius: 25px; text-align: center; border: 1px solid var(--ui-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 90%; max-width: 350px; z-index: 9999;
-        }
+        .pill-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
 
     </style>
 </head>
 <body>
 
     <div id="bg-clouds-container"></div>
-    <div id="nube-top"></div>
 
-    <div id="screen-menu" class="screen active">
+    <div id="screen-intro" class="screen active">
+        <div class="glass-panel">
+            <h1>HIGH THERE! 🦝</h1>
+            <p>Soy Highcoon. Bienvenidos a la resistencia.</p>
+            <p><strong>SGX In the Cloud</strong> es una infraestructura interactiva desarrollada por <strong>Spatialgineers</strong> en colaboración con <strong>In The Cloud PR</strong>.</p>
+            <p>Nuestra misión es simple: educar a la comunidad cannábica sobre el verdadero poder de los terpenos y desmantelar, a través del juego, las fuerzas oscuras de STIGMA Corp.</p>
+            <p style="font-weight: 900; font-size: 1.1rem;">Keep up the high vibes 🍃</p>
+            <button class="btn" onclick="showScreen('screen-menu')">INICIAR ECOSISTEMA</button>
+        </div>
+    </div>
+
+    <div id="screen-menu" class="screen">
+        <div class="nube-top-layer"></div>
         <h1>HIGHcade</h1>
-        <button class="btn" onclick="startGame('SMOKEOUT')">PUFF THE STIGMA</button>
-        <button class="btn" onclick="startGame('HARVEST')">TERPENE HARVEST</button>
-        <button class="btn" onclick="startGame('TRIVIA')">HIGH-Q TRIVIA</button>
+        <div class="menu-grid">
+            <button class="btn" onclick="startGame('SMOKEOUT')">1. PUFF THE STIGMA</button>
+            <button class="btn" onclick="startGame('HARVEST')">2. TERPENE HARVEST</button>
+            <button class="btn" onclick="startGame('TRIVIA')">3. HIGH-Q TRIVIA</button>
+            <div class="menu-row">
+                <button class="btn" onclick="showScreen('screen-instructions')">INSTRUCCIONES</button>
+                <button class="btn" onclick="showScreen('screen-glossary')">GLOSARIO</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-instructions" class="screen">
+        <div class="glass-panel">
+            <h1>REGLAS</h1>
+            <p style="text-align: left; margin-bottom: 10px;"><strong>REGLA GLOBAL:</strong> Sobrevive 60 segundos. Pierdes 3 vidas y es Game Over.</p>
+            <p style="text-align: left; margin-bottom: 10px;"><strong>1. PUFF THE STIGMA:</strong> Toca las nubes tintadas para reventarlas y liberar el poder del terpeno correcto. Evita tocar el logo de STIGMA o perderás una vida.</p>
+            <p style="text-align: left; margin-bottom: 10px;"><strong>2. TERPENE HARVEST:</strong> Arrastra a Highcoon de lado a lado para recolectar los viales de terpenos que caen. Si agarras el logo de STIGMA o dejas caer un vial, pierdes una vida.</p>
+            <p style="text-align: left; margin-bottom: 20px;"><strong>3. HIGH-Q TRIVIA:</strong> Demuestra tu conocimiento del lore y la ciencia. Selecciona el terpeno correcto que cura el malestar antes de que acabe el tiempo.</p>
+            <button class="btn" onclick="showScreen('screen-menu')">VOLVER AL HUB</button>
+        </div>
+    </div>
+
+    <div id="screen-glossary" class="screen">
+        <div class="nube-top-layer"></div>
+        <div class="glass-panel">
+            <h1>TERP-NOLOGY</h1>
+            <p>Conoce tu arsenal contra STIGMA.</p>
+            <div class="glossary-grid" id="glossary-content">
+                </div>
+            <button class="btn" onclick="showScreen('screen-menu')">VOLVER AL HUB</button>
+        </div>
     </div>
 
     <div id="screen-smokeout" class="screen">
+        <div id="smokeout-area"></div> 
+        <div class="nube-top-layer"></div>
         <div class="hud">
             <div class="hud-box">SCORE: <span id="so-score">0</span></div>
             <div class="hud-box">⏱️ <span id="so-time">60</span>s</div>
             <div class="hud-box lives" id="so-lives">❤️❤️❤️</div>
         </div>
-        <div id="smokeout-area"></div>
     </div>
 
     <div id="screen-harvest" class="screen">
+        <canvas id="canvas-harvest"></canvas>
+        <div class="nube-top-layer"></div>
         <div class="hud">
             <div class="hud-box">SCORE: <span id="ha-score">0</span></div>
             <div class="hud-box">⏱️ <span id="ha-time">60</span>s</div>
             <div class="hud-box lives" id="ha-lives">❤️❤️❤️</div>
         </div>
-        <canvas id="canvas-harvest"></canvas>
     </div>
 
     <div id="screen-trivia" class="screen">
+        <div class="nube-top-layer"></div>
         <div class="hud">
             <div class="hud-box">SCORE: <span id="tr-score">0</span>/8</div>
             <div class="hud-box">⏱️ <span id="tr-time">60</span>s</div>
@@ -164,12 +209,12 @@
 
     <div id="screen-gameover" class="screen">
         <div class="glass-panel">
-            <h1 style="font-size: 1.8rem; margin-bottom:5px;">FIN DEL JUEGO</h1>
-            <h2 id="go-title" style="color: var(--neon-green); margin-bottom: 15px; font-size: 1.2rem;">Juego</h2>
+            <h1 style="font-size: 1.8rem; margin-bottom:5px; color: var(--stigma-red); text-shadow: none;">FIN DEL JUEGO</h1>
+            <h2 id="go-title" style="color: white; margin-bottom: 15px; font-size: 1.2rem;">Juego</h2>
             <h1 id="go-score" style="font-size: 3.5rem; margin-bottom: 20px;">0</h1>
-            <button class="btn btn-action" onclick="replayGame()">JUGAR DE NUEVO</button>
+            <button class="btn" onclick="replayGame()">REINTENTAR</button>
             <button class="btn" onclick="shareScore()">COMPARTIR SCORE</button>
-            <button class="btn" style="background: rgba(0,0,0,0.4);" onclick="showScreen('screen-menu')">MENÚ PRINCIPAL</button>
+            <button class="btn" onclick="showScreen('screen-menu')">MENÚ PRINCIPAL</button>
         </div>
     </div>
 
@@ -192,17 +237,19 @@
             ]
         };
 
-        // LORE CORREGIDO: Correlación Circular Exacta y Colores Highcoon
+        // LORE CORREGIDO: Correlación Circular Exacta de Highcoon
         const TERPENES = [
-            { id: 0, name: 'Myrcene', color: '#0000FF', img: 'https://static.wixstatic.com/media/fe81a7_43d2ee6d54c64c2ca2fb8cb520300713~mv2.png', stigma: 'LETARGO', savior: 'Limonene' },
-            { id: 1, name: 'Limonene', color: '#FFD700', img: 'https://static.wixstatic.com/media/fe81a7_3f71f7e6ab1a460d9e48207242333a2e~mv2.png', stigma: 'ESTRÉS', savior: 'Beta-Pinene' },
-            { id: 2, name: 'Linalool', color: '#FF69B4', img: 'https://static.wixstatic.com/media/fe81a7_48d79c36bee646c296b9274c4c377627~mv2.png', stigma: 'DESCONEXIÓN', savior: 'Humulene' },
-            { id: 3, name: 'Terpinolene', color: '#800080', img: 'https://static.wixstatic.com/media/fe81a7_c5013ac9ba024fbfae403e004c3efca5~mv2.png', stigma: 'APATÍA', savior: 'Alpha-Pinene' },
-            { id: 4, name: 'Humulene', color: '#FFA500', img: 'https://static.wixstatic.com/media/fe81a7_832d0d4530dd429d9acd879284f0cb62~mv2.png', stigma: 'AGITACIÓN', savior: 'Caryophyllene' },
-            { id: 5, name: 'Caryophyllene', color: '#FF0000', img: 'https://static.wixstatic.com/media/fe81a7_76aac2a2b0d54f7d899ffd282017b7b6~mv2.png', stigma: 'GLOTONERÍA', savior: 'Myrcene' },
-            { id: 6, name: 'Alpha-Pinene', color: '#40E0D0', img: 'https://static.wixstatic.com/media/fe81a7_2f497473537a4ccc9dbcd5a2e614833e~mv2.png', stigma: 'ANSIEDAD', savior: 'Linalool' },
-            { id: 7, name: 'Beta-Pinene', color: '#228B22', img: 'https://static.wixstatic.com/media/fe81a7_08e377f499ef4f478652177dbf120b04~mv2.png', stigma: 'SOBREPENSAR', savior: 'Terpinolene' }
+            { id: 0, name: 'Myrcene', color: '#0000FF', img: 'https://static.wixstatic.com/media/fe81a7_43d2ee6d54c64c2ca2fb8cb520300713~mv2.png', stigma: 'LETARGO', goodVibe: 'Relajación y Paz', savior: 'Limonene' },
+            { id: 1, name: 'Limonene', color: '#FFD700', img: 'https://static.wixstatic.com/media/fe81a7_3f71f7e6ab1a460d9e48207242333a2e~mv2.png', stigma: 'ESTRÉS', goodVibe: 'Energía y Alegría', savior: 'Beta-Pinene' },
+            { id: 2, name: 'Linalool', color: '#FF69B4', img: 'https://static.wixstatic.com/media/fe81a7_48d79c36bee646c296b9274c4c377627~mv2.png', stigma: 'DESCONEXIÓN', goodVibe: 'Calma y Serenidad', savior: 'Humulene' },
+            { id: 3, name: 'Terpinolene', color: '#800080', img: 'https://static.wixstatic.com/media/fe81a7_c5013ac9ba024fbfae403e004c3efca5~mv2.png', stigma: 'APATÍA', goodVibe: 'Creatividad Compleja', savior: 'Alpha-Pinene' },
+            { id: 4, name: 'Humulene', color: '#FFA500', img: 'https://static.wixstatic.com/media/fe81a7_832d0d4530dd429d9acd879284f0cb62~mv2.png', stigma: 'AGITACIÓN', goodVibe: 'Supresión y Balance', savior: 'Caryophyllene' },
+            { id: 5, name: 'Caryophyllene', color: '#FF0000', img: 'https://static.wixstatic.com/media/fe81a7_76aac2a2b0d54f7d899ffd282017b7b6~mv2.png', stigma: 'GLOTONERÍA', goodVibe: 'Alivio y Protección', savior: 'Myrcene' },
+            { id: 6, name: 'Alpha-Pinene', color: '#40E0D0', img: 'https://static.wixstatic.com/media/fe81a7_2f497473537a4ccc9dbcd5a2e614833e~mv2.png', stigma: 'ANSIEDAD', goodVibe: 'Alerta y Enfoque', savior: 'Linalool' },
+            { id: 7, name: 'Beta-Pinene', color: '#228B22', img: 'https://static.wixstatic.com/media/fe81a7_08e377f499ef4f478652177dbf120b04~mv2.png', stigma: 'SOBREPENSAR', goodVibe: 'Memoria a Corto Plazo', savior: 'Terpinolene' }
         ];
+
+        function getTerpeneColor(name) { return (TERPENES.find(t => t.name === name) || TERPENES[0]).color; }
 
         const TRIVIA_QUESTIONS = [
             { q: "Llegas del trabajo exhausto y no puedes dormir por la tensión. ¿Qué terpeno necesitas?", correct: 0, wrong: 1 }, 
@@ -215,13 +262,37 @@
             { q: "Necesitas alerta mental y mejorar la retención de memoria a corto plazo.", correct: 7, wrong: 0 } 
         ];
 
-        // Precarga de Imágenes
+        // Precarga
         const loadedImages = {};
         function preloadAssets() {
             const allSrcs = [ASSETS.stigmaLogo, ASSETS.highcoon, ...ASSETS.clouds, ...TERPENES.map(t => t.img)];
             allSrcs.forEach(src => { let img = new Image(); img.src = src; loadedImages[src] = img; });
         }
         preloadAssets();
+
+        // Inicializar Glosario
+        function initGlossary() {
+            const container = document.getElementById('glossary-content');
+            TERPENES.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'terpene-card';
+                card.onmouseover = () => card.style.boxShadow = `0 0 15px ${t.color}`;
+                card.onmouseout = () => card.style.boxShadow = `none`;
+                card.style.borderLeft = `4px solid ${t.color}`;
+                
+                card.innerHTML = `
+                    <img src="${t.img}" alt="${t.name}">
+                    <div style="flex:1;">
+                        <h3 style="color:${t.color}">${t.name}</h3>
+                        <p><strong>Aporta:</strong> ${t.goodVibe}</p>
+                        <p><strong>Causa (Stigma):</strong> ${t.stigma}</p>
+                        <span class="t-savior" style="color: ${getTerpeneColor(t.savior)};">Vencido por: ${t.savior}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        initGlossary();
 
         // ==========================================
         // 2. STATE MACHINE Y UTILIDADES
@@ -238,9 +309,11 @@
             clearInterval(currentGameInterval);
             cancelAnimationFrame(gameLoopId);
 
-            // CONTROL DE NUBES (AISLAMIENTO TOTAL PARA JUEGOS)
+            // Aislamiento de nubes flotantes (Solo se ven en menús)
             if(screenId === 'screen-harvest' || screenId === 'screen-smokeout') {
-                document.getElementById('bg-clouds-container').innerHTML = ''; // Limpia el cielo de nubes
+                document.getElementById('bg-clouds-container').style.display = 'none'; 
+            } else {
+                document.getElementById('bg-clouds-container').style.display = 'block'; 
             }
         }
 
@@ -264,20 +337,18 @@
             } else { navigator.clipboard.writeText(`${text} Juega aquí: ${CONFIG.shareUrl}`); alert("¡Enlace copiado!"); }
         }
 
-        // Sistema Global de Nubes (Exclusivo para Menú y Trivia)
+        // Sistema Global de Nubes
         function initGlobalClouds() {
             const container = document.getElementById('bg-clouds-container');
             setInterval(() => {
-                const isMenu = document.getElementById('screen-menu').classList.contains('active');
-                const isTrivia = document.getElementById('screen-trivia').classList.contains('active');
-                if(!isMenu && !isTrivia) return; // NO spawnea en los minijuegos
+                const isGame = document.getElementById('screen-harvest').classList.contains('active') || document.getElementById('screen-smokeout').classList.contains('active');
+                if(isGame) return; 
                 
                 const cloud = document.createElement('img');
                 cloud.src = ASSETS.clouds[Math.floor(Math.random() * ASSETS.clouds.length)];
                 cloud.className = 'menu-cloud';
                 cloud.style.top = Math.random() * 60 + '%';
                 cloud.style.width = (150 + Math.random() * 200) + 'px';
-                
                 const duration = 30 + Math.random() * 20; 
                 cloud.style.animationDuration = duration + 's';
                 
@@ -316,32 +387,25 @@
             }, 1000);
 
             function spawnTintedCloud(container) {
-                // 1. Selecciona el Terpeno que CAUSA el estigma
                 const terpeneTarget = TERPENES[Math.floor(Math.random() * TERPENES.length)];
-                // 2. Encuentra al Terpeno SALVADOR (el que lo derrota) en el array
                 const terpeneSavior = TERPENES.find(t => t.name === terpeneTarget.savior);
-                
                 const cloudImg = ASSETS.clouds[Math.floor(Math.random() * ASSETS.clouds.length)];
                 
                 const el = document.createElement('div');
                 el.className = 'cloud-target';
                 el.style.left = Math.random() * 70 + '%';
                 el.style.top = 20 + Math.random() * 60 + '%';
-                
-                // Muestra la palabra del ESTIGMA que causa ese terpeno
                 el.innerText = terpeneTarget.stigma; 
 
                 const mask = document.createElement('div');
                 mask.className = 'cloud-mask';
                 mask.style.webkitMaskImage = `url('${cloudImg}')`;
-                // La nube asume el COLOR DEL TERPENO QUE CAUSA EL ESTIGMA
                 mask.style.backgroundColor = terpeneTarget.color;
                 el.appendChild(mask);
 
                 el.ontouchstart = el.onmousedown = (e) => {
                     e.preventDefault();
                     score += 10; document.getElementById('so-score').innerText = score;
-                    // Al romperla, revela qué Terpeno lo derrotó y MUESTRA EL COLOR DEL SALVADOR
                     showFloatText(container, el.style.left, el.style.top, `¡${terpeneSavior.name} venció esto!`, terpeneSavior.color);
                     el.remove();
                 };
