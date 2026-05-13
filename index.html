@@ -8,11 +8,11 @@
     <style>
         :root {
             --font-main: 'Orbitron', sans-serif;
-            --ui-glass: rgba(255, 255, 255, 0.45); 
+            --ui-glass: #888888; /* Contenedores gris 888888 para mayor contraste */
             --ui-border: rgba(255, 255, 255, 0.5);
             --ui-dark: rgba(0, 0, 0, 0.7);
             --stigma-red: #ff3131;
-            --emphasize-green: #00ffcc; /* Nuevo verde neón para énfasis */
+            --emphasize-green: #00ffcc;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
@@ -30,8 +30,8 @@
         }
 
         /* --- AJUSTE GLOBAL DE TIPOGRAFÍA: MÁS GRUESA Y CONSISTENTE --- */
-        h1, h2, h3, button { font-weight: 900; } /* Títulos y botones con peso máximo */
-        p, span, div, strong { font-weight: 700; } /* Todo el texto de lectura ahora es Bold (700) */
+        h1, h2, h3, button { font-weight: 900; }
+        p, span, div, strong { font-weight: 700; }
 
         /* --- BORDE NEGRO SUAVIZADO PARA TODO EL TEXTO --- */
         h1, h2, h3, p, span, div, button, strong {
@@ -66,13 +66,14 @@
         p { text-align: center; margin-bottom: 20px; line-height: 1.5; font-size: 0.95rem; color: #ffffff; }
         
         .btn {
-            background: var(--ui-glass); border: 1px solid var(--ui-border); color: white;
+            background: rgba(0, 0, 0, 0.6); /* Fondo más oscuro para destacar contra el gris 888888 */
+            border: 1px solid var(--ui-border); color: white;
             padding: 15px; margin: 8px; font-size: 1rem; font-family: var(--font-main);
             cursor: pointer; border-radius: 50px; transition: all 0.2s ease; width: 90%; max-width: 320px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             z-index: 10;
         }
-        .btn:active { transform: scale(0.95); background: rgba(255,255,255,0.5); color: white; }
+        .btn:active { transform: scale(0.95); background: rgba(255,255,255,0.3); color: white; }
 
         .menu-grid { display: flex; flex-direction: column; align-items: center; width: 100%; z-index: 10; }
         .menu-row { display: flex; width: 90%; max-width: 350px; justify-content: space-between; }
@@ -168,6 +169,10 @@
                 <button class="btn" onclick="showScreen('screen-instructions')">INSTRUCCIONES</button>
                 <button class="btn" onclick="showScreen('screen-glossary')">GLOSARIO</button>
             </div>
+            <div class="menu-row" style="margin-top: 5px;">
+                <button class="btn" onclick="window.open('https://thcgrouppr.com', '_blank')">HIGHCOON</button>
+                <button class="btn" onclick="window.open('https://www.instagram.com/inthecloudpr?igsh=ZzhvY3pnaDg5YW1k', '_blank')">IN THE CLOUD</button>
+            </div>
         </div>
     </div>
 
@@ -246,7 +251,8 @@
         // ==========================================
         // 1. BASE DE DATOS Y ASSETS 
         // ==========================================
-        const CONFIG = { shareUrl: "https://tudominio.com/highcade" };
+        // URL ACTUALIZADA
+        const CONFIG = { shareUrl: "https://spatialgineers.com/inthecloud" };
 
         const ASSETS = {
             stigmaLogo: "https://static.wixstatic.com/media/fe81a7_5670a65700584faa86f361573ecbf1f1~mv2.png",
@@ -318,7 +324,7 @@
         // ==========================================
         function startEcosystem() {
             const bgm = document.getElementById('bg-music');
-            bgm.volume = 0.15; // BAJADO EXTRA POR 50% (AMBIENTAL)
+            bgm.volume = 0.15; 
             bgm.play().catch(e => console.log("Auto-play prevented"));
             showScreen('screen-menu');
         }
@@ -346,7 +352,6 @@
             osc.start();
             osc.stop(audioCtx.currentTime + 0.3);
         }
-
 
         // ==========================================
         // 2. STATE MACHINE Y UTILIDADES
@@ -432,7 +437,7 @@
 
             currentGameInterval = setInterval(() => {
                 time--; document.getElementById('so-time').innerText = time;
-                if(time <= 0) { triggerGameOver("PUFF OUT THE STIGMA", score); return; } // Renombrado en Lógica
+                if(time <= 0) { triggerGameOver("PUFF OUT THE STIGMA", score); return; }
 
                 if(Math.random() > 0.35) spawnTintedCloud(area);
                 else spawnStigmaLogo(area);
@@ -457,7 +462,7 @@
 
                 el.ontouchstart = el.onmousedown = (e) => {
                     e.preventDefault();
-                    playGameSound('correct'); // AUDIO FEEDBACK
+                    playGameSound('correct'); 
                     score += 10; document.getElementById('so-score').innerText = score;
                     showFloatText(container, el.style.left, el.style.top, `¡${terpeneSavior.name} venció esto!`, terpeneSavior.color);
                     el.remove();
@@ -475,11 +480,11 @@
 
                 el.ontouchstart = el.onmousedown = (e) => {
                     e.preventDefault();
-                    playGameSound('wrong'); // AUDIO FEEDBACK
+                    playGameSound('wrong'); 
                     lives--; updateLives('so-lives', lives);
                     showFloatText(container, el.style.left, el.style.top, "-1 VIDA", "var(--stigma-red)");
                     el.remove();
-                    if(lives <= 0) triggerGameOver("PUFF OUT THE STIGMA", score); // Renombrado en Lógica
+                    if(lives <= 0) triggerGameOver("PUFF OUT THE STIGMA", score);
                 };
 
                 container.appendChild(el);
@@ -546,6 +551,11 @@
                     lastSpawn = Date.now();
                 }
 
+                // BOUNDARY BOX REDUCIDO PARA LA CABEZA DE HIGHCOON
+                let hitboxX = player.x + 25;
+                let hitboxY = player.y + 30;
+                let hitboxW = player.w - 50;
+
                 for(let i = items.length - 1; i >= 0; i--) {
                     let it = items[i];
                     it.y += it.speed;
@@ -558,7 +568,8 @@
                     if(imgToDraw) ctx.drawImage(imgToDraw, it.x, it.y, it.size, it.size);
                     ctx.restore();
 
-                    if(it.y + it.size > player.y && it.x < player.x + player.w && it.x + it.size > player.x) {
+                    // VALIDACIÓN DE COLISIÓN USANDO EL HITBOX REDUCIDO
+                    if(it.y + it.size > hitboxY && it.x < hitboxX + hitboxW && it.x + it.size > hitboxX) {
                         if(it.isHazard) {
                             playGameSound('wrong');
                             lives--; updateLives('ha-lives', lives);
