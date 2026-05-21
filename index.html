@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prepara el Pincho | SGX Engine</title>
+    <title>Cascaritas Pinchos x SGX</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 
@@ -35,7 +35,7 @@
             z-index: 1;
         }
 
-        /* SGX HUD Elements */
+        /* HUD Elements */
         #hud {
             position: absolute;
             top: 15px;
@@ -87,12 +87,19 @@
 
         h1 {
             color: var(--sgx-gold);
-            font-size: clamp(1.5rem, 6vw, 2.5rem);
-            margin: 0 0 10px 0;
+            font-size: clamp(1.5rem, 6vw, 2.2rem);
+            margin: 0 0 5px 0;
             text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(253, 204, 13, 0.3);
         }
 
-        h2 { color: var(--sgx-cyan); font-size: 1.1rem; margin-top: 0; letter-spacing: 1px; }
+        h2 { 
+            color: var(--sgx-cyan); 
+            font-size: 0.9rem; 
+            margin-top: 0; 
+            letter-spacing: 2px; 
+            margin-bottom: 20px;
+        }
         
         p { font-family: sans-serif; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; color: #ccc;}
 
@@ -141,12 +148,12 @@
 
     <div id="ui-menu" class="overlay">
         <div class="glass-panel">
-            <h1>Prepara El Pincho</h1>
-            <h2>MATADOR DE TIEMPO OFICIAL</h2>
+            <h1>CASCARITAS PINCHOS</h1>
+            <h2>x SPATIALGINEERS</h2>
             <p>Mueve el palito, atrapa los ingredientes y no dejes que caigan al piso.<br><br>¿Cuántos puedes armar antes de que salga tu orden?</p>
             <div class="stat-box" id="menu-highscore">RÉCORD LOCAL: 0</div>
             <button class="sgx-btn" onclick="startGame()">Comenzar</button>
-            <div class="footer">POWERED BY SPATIALGINEERS</div>
+            <div class="footer">POWERED BY SGX ENGINE</div>
         </div>
     </div>
 
@@ -163,7 +170,7 @@
             <p id="motivation-msg" style="font-size: 0.85rem;"></p>
             
             <button class="sgx-btn" onclick="startGame()">Dale Otra Vez</button>
-            <div class="footer">POWERED BY SPATIALGINEERS</div>
+            <div class="footer">CASCARITAS PINCHOS x SGX</div>
         </div>
     </div>
 
@@ -182,8 +189,8 @@
     let w, h, frame = 0, score = 0, lives = 3, gameSpeed = 1, gameState = 'MENU';
     let startTime = 0;
 
-    // Persistencia de High Score (Validation Hook)
-    let highScore = localStorage.getItem('sgx_pincho_hs') || 0;
+    // Persistencia de High Score con Namespace del Negocio
+    let highScore = localStorage.getItem('cascaritas_sgx_hs') || 0;
     document.getElementById('menu-highscore').innerText = `RÉCORD LOCAL: ${highScore}`;
 
     const ingredients = ['🥩', '🍗', '🍞', '🧅', '🧄'];
@@ -212,7 +219,8 @@
             x: Math.random() * (w - 60) + 30,
             y: -50,
             type: ingredients[Math.floor(Math.random() * ingredients.length)],
-            speed: (3.5 + Math.random() * 3) * gameSpeed,
+            // Velocidad base más lenta (2.0 a 3.5)
+            speed: (2.0 + Math.random() * 1.5) * gameSpeed, 
             size: 45
         });
     }
@@ -240,17 +248,15 @@
         gameState = 'END';
         hud.style.display = 'none';
         
-        // Calcular tiempo invertido (La métrica de validación)
         const timePlayed = Math.floor((Date.now() - startTime) / 1000);
         const mins = Math.floor(timePlayed / 60);
         const secs = timePlayed % 60;
         const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
-        // Lógica de Récord
         let isNewRecord = false;
         if (score > highScore) {
             highScore = score;
-            localStorage.setItem('sgx_pincho_hs', highScore);
+            localStorage.setItem('cascaritas_sgx_hs', highScore);
             isNewRecord = true;
         }
 
@@ -274,9 +280,12 @@
         if (gameState !== 'PLAYING') return;
         frame++;
         
-        // La dificultad escala infinitamente
-        if (frame % Math.max(20, 70 - Math.floor(score * 4)) === 0) spawnItem();
-        gameSpeed = 1 + (score * 0.12); 
+        // Frecuencia de aparición más espaciada inicialmente (cada 90 frames en vez de 70)
+        // La curva de compresión ahora es menos agresiva
+        if (frame % Math.max(35, 90 - Math.floor(score * 2)) === 0) spawnItem();
+        
+        // Multiplicador de gravedad reducido (de 0.12 a 0.05) para prolongar el tiempo de sesión
+        gameSpeed = 1 + (score * 0.05); 
 
         for (let i = fallingItems.length - 1; i >= 0; i--) {
             let item = fallingItems[i];
