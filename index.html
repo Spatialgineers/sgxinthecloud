@@ -3,683 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>In The Cloud x Highcoon: Highcade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>Prepara el Pincho | SGX Engine</title>
     <style>
-        :root {
-            --font-main: 'Orbitron', sans-serif;
-            --ui-glass: #888888; /* Contenedores gris 888888 para mayor contraste */
-            --ui-border: rgba(255, 255, 255, 0.5);
-            --ui-dark: rgba(0, 0, 0, 0.7);
-            --stigma-red: #ff3131;
-            --emphasize-green: #00ffcc;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        :root {
+            --sgx-gold: #FDCC0D;
+            --sgx-blue: #32527B;
+            --sgx-cyan: #00FFFF;
+            --sgx-dark: #1A1A1A;
+            --bg-color: #050505;
+        }
 
         body {
-            font-family: var(--font-main);
-            color: white;
+            margin: 0;
+            padding: 0;
             overflow: hidden;
+            background: var(--bg-color);
+            font-family: 'Orbitron', sans-serif;
+            touch-action: none;
+            color: white;
+        }
+
+        canvas {
+            display: block;
             width: 100vw;
             height: 100vh;
-            background-color: #87CEEB;
-            background-image: url('https://static.wixstatic.com/media/fe81a7_02476321b50246029852fad38ebac56d~mv2.png');
-            background-size: cover;
-            background-position: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
 
-        /* --- AJUSTE GLOBAL DE TIPOGRAFÍA: MÁS GRUESA Y CONSISTENTE --- */
-        h1, h2, h3, button { font-weight: 900; }
-        p, span, div, strong { font-weight: 700; }
-
-        /* --- BORDE NEGRO SUAVIZADO PARA TODO EL TEXTO --- */
-        h1, h2, h3, p, span, div, button, strong {
-            -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.9);
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-        }
-
-        /* CLASE DE ÉNFASIS VERDE */
-        .emphasize { color: var(--emphasize-green) !important; }
-        .stigma-fail { color: var(--stigma-red) !important; }
-
-        /* CAPAS GLOBALES DE FONDO */
-        #bg-clouds-container { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 1; pointer-events: none; overflow: hidden; }
-        
-        #banner-bottom {
-            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-            width: 100%; max-width: 400px; z-index: 50; pointer-events: none;
-        }
-
-        .nube-top-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 120px;
-            background-image: url('https://static.wixstatic.com/media/fe81a7_18e8be615d794f9b86f710a38ec33be3~mv2.png');
-            background-size: cover; background-position: bottom; pointer-events: none; z-index: 5;
-        }
-
-        /* STATE MACHINE */
-        .screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 10; }
-        .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-
-        /* UI & BUTTONS MONOCROMÁTICOS */
-        h1 { color: white; text-align: center; margin-bottom: 15px; font-size: 2.2rem; }
-        p { text-align: center; margin-bottom: 20px; line-height: 1.5; font-size: 0.95rem; color: #ffffff; }
-        
-        .btn {
-            background: rgba(0, 0, 0, 0.6); /* Fondo más oscuro para destacar contra el gris 888888 */
-            border: 1px solid var(--ui-border); color: white;
-            padding: 15px; margin: 8px; font-size: 1rem; font-family: var(--font-main);
-            cursor: pointer; border-radius: 50px; transition: all 0.2s ease; width: 90%; max-width: 320px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        /* SGX HUD Elements */
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
             z-index: 10;
+            pointer-events: none;
+            display: none;
         }
-        .btn:active { transform: scale(0.95); background: rgba(255,255,255,0.3); color: white; }
 
-        .menu-grid { display: flex; flex-direction: column; align-items: center; width: 100%; z-index: 10; }
-        .menu-row { display: flex; width: 90%; max-width: 350px; justify-content: space-between; }
-        .menu-row .btn { width: 48%; font-size: 0.8rem; padding: 12px 5px;}
+        .hud-stat {
+            background: rgba(50, 82, 123, 0.4);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--sgx-gold);
+            padding: 10px 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--sgx-gold);
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
 
-        /* HUD */
-        .hud { position: absolute; top: 15px; left: 0; width: 100%; padding: 0 20px; display: flex; justify-content: space-between; z-index: 20; pointer-events: none; }
-        .hud-box { background: var(--ui-dark); backdrop-filter: blur(5px); border: 1px solid var(--ui-border); padding: 5px 12px; color: white; border-radius: 20px; font-size: 0.9rem;}
-        .lives { color: var(--stigma-red); letter-spacing: 2px; -webkit-text-stroke: 0 !important; text-shadow: none !important;}
+        /* Pantallas UI */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            background: radial-gradient(circle at center, rgba(26,26,26,0.85) 0%, rgba(5,5,5,0.98) 100%);
+        }
 
-        /* ANIMACIONES DE NUBES FLOTANTES */
-        .menu-cloud { position: absolute; opacity: 0.85; animation: float linear infinite; pointer-events: none; }
-        @keyframes float { from { transform: translateX(120vw); } to { transform: translateX(-50vw); } }
-
-        /* PANELES DE LECTURA */
         .glass-panel {
-            background: var(--ui-glass); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            padding: 30px 25px; border-radius: 25px; text-align: center; border: 1px solid var(--ui-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6); width: 90%; max-width: 400px; z-index: 10;
-            max-height: 80vh; overflow-y: auto; pointer-events: auto; touch-action: pan-y;
+            background: rgba(50, 82, 123, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--sgx-gold);
+            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+            padding: clamp(20px, 5vw, 40px);
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
         }
+
+        h1 {
+            color: var(--sgx-gold);
+            font-size: clamp(1.5rem, 6vw, 2.5rem);
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+        }
+
+        h2 { color: var(--sgx-cyan); font-size: 1.1rem; margin-top: 0; letter-spacing: 1px; }
         
-        .glass-panel::-webkit-scrollbar { width: 6px; }
-        .glass-panel::-webkit-scrollbar-track { background: transparent; }
-        .glass-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.5); border-radius: 10px; }
+        p { font-family: sans-serif; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; color: #ccc;}
 
-        /* GLOSARIO GRID */
-        .glossary-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; margin-bottom: 20px; }
-        .terpene-card {
-            background: rgba(0,0,0,0.7); border: 1px solid var(--ui-border); border-radius: 15px;
-            padding: 15px; display: flex; align-items: center; text-align: left; transition: all 0.3s ease;
+        .stat-box {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid var(--sgx-cyan);
+            padding: 10px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: var(--sgx-cyan);
         }
-        .terpene-card img { width: 50px; height: 50px; margin-right: 15px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
-        .terpene-card h3 { font-size: 1.1rem; margin-bottom: 5px; }
-        .terpene-card p { margin: 2px 0; font-size: 0.75rem; color: #fff; text-align: left; line-height: 1.2;}
-        .t-savior { font-weight: bold; font-size: 0.8rem; margin-top: 5px; display: inline-block; }
 
-        /* JUEGO 1: SMOKE OUT */
-        #smokeout-area { width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden; pointer-events: auto; z-index: 1; }
-        .cloud-target {
-            position: absolute; width: 120px; height: 80px; display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1rem; transition: transform 0.1s; text-align: center;
+        .sgx-btn {
+            background: rgba(253, 204, 13, 0.05);
+            color: var(--sgx-gold);
+            border: 1px solid var(--sgx-gold);
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            width: 100%;
+            display: block;
         }
-        .cloud-mask { position: absolute; top:0; left:0; width: 100%; height: 100%; z-index: -1; -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; opacity: 0.9; }
-        .stigma-hazard { position: absolute; width: 70px; height: 70px; background-image: url('https://static.wixstatic.com/media/fe81a7_5670a65700584faa86f361573ecbf1f1~mv2.png'); background-size: contain; background-repeat: no-repeat; }
-        .pop-text { position: absolute; font-size: 1.1rem; pointer-events: none; animation: rise 1s ease-out forwards; text-align: center; width: 180px; left: -30px; z-index: 20;}
-        @keyframes rise { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
 
-        /* JUEGO 2: HARVEST */
-        #canvas-harvest { width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1;}
-
-        /* JUEGO 3: TRIVIA */
-        #trivia-container { 
-            width: 90%; max-width: 400px; background: var(--ui-glass); backdrop-filter: blur(10px); border: 1px solid var(--ui-border);
-            padding: 30px 20px; border-radius: 20px; min-height: 300px; display: flex; flex-direction: column; justify-content: center; z-index: 10;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); pointer-events: auto;
+        .sgx-btn:active {
+            background: var(--sgx-gold);
+            color: var(--bg-color);
         }
-        #question-text { font-size: 1.2rem; margin-bottom: 20px; color: white; text-align: center;}
-        
-        .pill-btn { display: flex; align-items: center; background: rgba(0,0,0,0.6); border: 2px solid var(--ui-border); border-radius: 50px; padding: 8px 15px; margin: 10px 0; color: white; cursor: pointer; transition: 0.2s ease; }
-        .pill-btn img { width: 40px; height: 40px; margin-right: 15px; }
-        
-        .pill-btn.correct { background: rgba(46, 204, 113, 0.9) !important; border-color: #2ecc71; transform: scale(1.05); box-shadow: 0 0 15px #2ecc71;}
-        .pill-btn.wrong { background: rgba(231, 76, 60, 0.9) !important; border-color: #e74c3c; transform: scale(0.95); box-shadow: 0 0 15px #e74c3c;}
+
+        .footer { margin-top: 20px; font-size: 0.6rem; color: #666; letter-spacing: 1px; }
+        .hidden { display: none !important; }
 
     </style>
 </head>
 <body>
 
-    <audio id="bg-music" src="https://static.wixstatic.com/mp3/fe81a7_329fc00d8b914b45a39f49ec1ac7e49f.mp3" loop preload="auto"></audio>
+    <div id="hud">
+        <div class="hud-stat" id="score-display">0</div>
+        <div class="hud-stat" style="color: #ff0055; border-color: #ff0055;">VIDAS: <span id="lives">3</span></div>
+    </div>
 
-    <div id="bg-clouds-container"></div>
-
-    <div id="screen-intro" class="screen active">
+    <div id="ui-menu" class="overlay">
         <div class="glass-panel">
-            <h1>HIGH THERE! 🦝</h1>
-            <p>Soy <strong class="emphasize">Highcoon</strong>. Bienvenidos a la <strong class="emphasize">resistencia</strong>.</p>
-            <p><strong class="emphasize">SGX In the Cloud</strong> es una infraestructura interactiva desarrollada por <strong class="emphasize">Spatialgineers</strong> en colaboración con <strong class="emphasize">In The Cloud PR</strong>.</p>
-            <p>Nuestra misión es simple: educar a la comunidad cannábica sobre el <strong class="emphasize">verdadero poder de los terpenos</strong> y desmantelar, a través del juego, las fuerzas oscuras de <strong class="emphasize">STIGMA Corp</strong>.</p>
-            <p style="font-weight: 900; font-size: 1.1rem;"><strong class="emphasize">Keep up the high vibes</strong> 🍃</p>
-            <button class="btn" onclick="startEcosystem()">INICIAR ECOSISTEMA</button>
+            <h1>Prepara El Pincho</h1>
+            <h2>MATADOR DE TIEMPO OFICIAL</h2>
+            <p>Mueve el palito, atrapa los ingredientes y no dejes que caigan al piso.<br><br>¿Cuántos puedes armar antes de que salga tu orden?</p>
+            <div class="stat-box" id="menu-highscore">RÉCORD LOCAL: 0</div>
+            <button class="sgx-btn" onclick="startGame()">Comenzar</button>
+            <div class="footer">POWERED BY SPATIALGINEERS</div>
         </div>
     </div>
 
-    <div id="screen-menu" class="screen">
-        <div class="nube-top-layer"></div>
-        <h1>HIGHcade</h1>
-        <div class="menu-grid">
-            <button class="btn" onclick="startGame('SMOKEOUT')">1. PUFF OUT THE STIGMA</button>
-            <button class="btn" onclick="startGame('HARVEST')">2. TERPENE HARVEST</button>
-            <button class="btn" onclick="startGame('TRIVIA')">3. HIGH-Q TRIVIA</button>
-            <div class="menu-row">
-                <button class="btn" onclick="showScreen('screen-instructions')">INSTRUCCIONES</button>
-                <button class="btn" onclick="showScreen('screen-glossary')">GLOSARIO</button>
+    <div id="ui-result" class="overlay hidden">
+        <div class="glass-panel">
+            <h1 style="color: #ff0055;">¡SE CAYÓ!</h1>
+            
+            <div class="stat-box" style="text-align: left;">
+                > PINCHOS: <span id="result-score" style="color: var(--sgx-gold); font-weight: bold;">0</span><br>
+                > RÉCORD: <span id="result-highscore" style="color: var(--sgx-gold); font-weight: bold;">0</span><br>
+                > TIEMPO ANIQUILADO: <span id="result-time" style="color: var(--sgx-gold); font-weight: bold;">0s</span>
             </div>
-            <div class="menu-row" style="margin-top: 5px;">
-                <button class="btn" onclick="window.open('https://thcgrouppr.com', '_blank')">HIGHCOON</button>
-                <button class="btn" onclick="window.open('https://www.instagram.com/inthecloudpr?igsh=ZzhvY3pnaDg5YW1k', '_blank')">IN THE CLOUD</button>
-            </div>
+
+            <p id="motivation-msg" style="font-size: 0.85rem;"></p>
+            
+            <button class="sgx-btn" onclick="startGame()">Dale Otra Vez</button>
+            <div class="footer">POWERED BY SPATIALGINEERS</div>
         </div>
     </div>
 
-    <div id="screen-instructions" class="screen">
-        <div class="glass-panel">
-            <h1>REGLAS</h1>
-            <p style="text-align: left; margin-bottom: 10px;"><strong><strong class="emphasize">REGLA GLOBAL:</strong></strong> <strong class="emphasize">Sobrevive 60 segundos</strong>. Pierdes 3 vidas y es Game Over.</p>
-            
-            <p style="text-align: left; margin-bottom: 10px;"><strong class="emphasize">1. PUFF OUT THE STIGMA:</strong> Toca las <strong class="emphasize">nubes tintadas</strong> para reventarlas y liberar el poder del terpeno correcto. Evita tocar el <strong class="emphasize stigma-fail">logo de STIGMA</strong> o perderás una vida.</p>
-            
-            <p style="text-align: left; margin-bottom: 10px;"><strong class="emphasize">2. TERPENE HARVEST:</strong> <strong class="emphasize">Arrastra a Highcoon</strong> de lado a lado para recolectar los viales de terpenos que caen. Si agarras el logo de STIGMA o dejas caer un vial, pierdes una vida.</p>
-            
-            <p style="text-align: left; margin-bottom: 20px;"><strong class="emphasize">3. HIGH-Q TRIVIA:</strong> Demuestra tu conocimiento del lore y la ciencia. Selecciona el <strong class="emphasize">terpeno correcto</strong> que cura el malestar antes de que acabe el tiempo.</p>
-            
-            <button class="btn" onclick="showScreen('screen-menu')">VOLVER AL HUB</button>
-        </div>
-    </div>
+    <canvas id="gameCanvas"></canvas>
 
-    <div id="screen-glossary" class="screen">
-        <div class="nube-top-layer"></div>
-        <div class="glass-panel">
-            <h1>TERP-NOLOGY</h1>
-            <p>Conoce tu arsenal contra <strong class="emphasize">STIGMA</strong>.</p>
-            <div class="glossary-grid" id="glossary-content">
-                </div>
-            <button class="btn" onclick="showScreen('screen-menu')">VOLVER AL HUB</button>
-        </div>
-    </div>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const uiMenu = document.getElementById('ui-menu');
+    const uiResult = document.getElementById('ui-result');
+    const hud = document.getElementById('hud');
+    const scoreEl = document.getElementById('score-display');
+    const livesEl = document.getElementById('lives');
+    
+    let w, h, frame = 0, score = 0, lives = 3, gameSpeed = 1, gameState = 'MENU';
+    let startTime = 0;
 
-    <div id="screen-smokeout" class="screen">
-        <div id="smokeout-area"></div> 
-        <div class="nube-top-layer"></div>
-        <div class="hud">
-            <div class="hud-box">SCORE: <span id="so-score">0</span></div>
-            <div class="hud-box">⏱️ <span id="so-time">60</span>s</div>
-            <div class="hud-box lives" id="so-lives">❤️❤️❤️</div>
-        </div>
-    </div>
+    // Persistencia de High Score (Validation Hook)
+    let highScore = localStorage.getItem('sgx_pincho_hs') || 0;
+    document.getElementById('menu-highscore').innerText = `RÉCORD LOCAL: ${highScore}`;
 
-    <div id="screen-harvest" class="screen">
-        <canvas id="canvas-harvest"></canvas>
-        <div class="nube-top-layer"></div>
-        <div class="hud">
-            <div class="hud-box">SCORE: <span id="ha-score">0</span></div>
-            <div class="hud-box">⏱️ <span id="ha-time">60</span>s</div>
-            <div class="hud-box lives" id="ha-lives">❤️❤️❤️</div>
-        </div>
-    </div>
+    const ingredients = ['🥩', '🍗', '🍞', '🧅', '🧄'];
+    const stick = { x: 0, y: 0, w: 8, h: 180, catchY: 0, stacked: [] };
+    let fallingItems = [];
 
-    <div id="screen-trivia" class="screen">
-        <div class="nube-top-layer"></div>
-        <div class="hud">
-            <div class="hud-box">SCORE: <span id="tr-score">0</span>/8</div>
-            <div class="hud-box">⏱️ <span id="tr-time">60</span>s</div>
-        </div>
-        <div id="trivia-container">
-            <div id="question-text">Loading...</div>
-            <div id="answers-container"></div>
-        </div>
-    </div>
+    function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+        stick.x = w / 2;
+        stick.y = h - 220;
+        stick.catchY = stick.y;
+    }
+    window.addEventListener('resize', resize);
+    resize();
 
-    <div id="screen-gameover" class="screen">
-        <div class="glass-panel">
-            <h1 style="font-size: 1.8rem; margin-bottom:5px; color: var(--stigma-red);">FIN DEL JUEGO</h1>
-            <h2 id="go-title" style="color: white; margin-bottom: 15px; font-size: 1.2rem;">Juego</h2>
-            <h1 id="go-score" style="font-size: 3.5rem; margin-bottom: 20px;">0</h1>
-            <button class="btn" onclick="replayGame()">REINTENTAR</button>
-            <button class="btn" onclick="shareScore()">COMPARTIR SCORE</button>
-            <button class="btn" onclick="showScreen('screen-menu')">MENÚ PRINCIPAL</button>
-        </div>
-    </div>
+    function moveStick(clientX) {
+        if(gameState !== 'PLAYING') return;
+        stick.x = clientX;
+    }
+    window.addEventListener('mousemove', e => moveStick(e.clientX));
+    window.addEventListener('touchmove', e => moveStick(e.touches[0].clientX));
 
-    <img id="banner-bottom" src="https://static.wixstatic.com/media/fe81a7_bde9bbbfc19142b18912394175ca7a3e~mv2.png" alt="Banner">
+    function spawnItem() {
+        fallingItems.push({
+            x: Math.random() * (w - 60) + 30,
+            y: -50,
+            type: ingredients[Math.floor(Math.random() * ingredients.length)],
+            speed: (3.5 + Math.random() * 3) * gameSpeed,
+            size: 45
+        });
+    }
 
-    <script>
-        // ==========================================
-        // 1. BASE DE DATOS Y ASSETS 
-        // ==========================================
-        // URL ACTUALIZADA
-        const CONFIG = { shareUrl: "https://spatialgineers.com/inthecloud" };
+    function startGame() {
+        score = 0;
+        lives = 3;
+        frame = 0;
+        gameSpeed = 1;
+        fallingItems = [];
+        stick.stacked = [];
+        stick.catchY = stick.y;
+        startTime = Date.now();
+        
+        scoreEl.innerText = score;
+        livesEl.innerText = lives;
+        
+        uiMenu.classList.add('hidden');
+        uiResult.classList.add('hidden');
+        hud.style.display = 'flex';
+        gameState = 'PLAYING';
+    }
 
-        const ASSETS = {
-            stigmaLogo: "https://static.wixstatic.com/media/fe81a7_5670a65700584faa86f361573ecbf1f1~mv2.png",
-            highcoon: "https://static.wixstatic.com/media/fe81a7_6e6e4e3bc3c24036b189b48169baf6b8~mv2.png",
-            clouds: [
-                "https://static.wixstatic.com/media/fe81a7_7b4fead0f0974dbbbdb3ceb752f97a6b~mv2.png",
-                "https://static.wixstatic.com/media/fe81a7_a84057820f564f618e7ed1154ac46b6e~mv2.png",
-                "https://static.wixstatic.com/media/fe81a7_4e2ba1d9fc714fd0bbd34fbca86a6c7a~mv2.png",
-                "https://static.wixstatic.com/media/fe81a7_bfd97c5888f14a188ceb39feef87f4cc~mv2.png"
-            ]
-        };
+    function endGame() {
+        gameState = 'END';
+        hud.style.display = 'none';
+        
+        // Calcular tiempo invertido (La métrica de validación)
+        const timePlayed = Math.floor((Date.now() - startTime) / 1000);
+        const mins = Math.floor(timePlayed / 60);
+        const secs = timePlayed % 60;
+        const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
-        const TERPENES = [
-            { id: 0, name: 'Myrcene', color: '#0000FF', img: 'https://static.wixstatic.com/media/fe81a7_43d2ee6d54c64c2ca2fb8cb520300713~mv2.png', stigma: 'LETARGO', goodVibe: 'Relajación y Paz', savior: 'Limonene' },
-            { id: 1, name: 'Limonene', color: '#FFD700', img: 'https://static.wixstatic.com/media/fe81a7_3f71f7e6ab1a460d9e48207242333a2e~mv2.png', stigma: 'ESTRÉS', goodVibe: 'Energía y Alegría', savior: 'Beta-Pinene' },
-            { id: 2, name: 'Linalool', color: '#FF69B4', img: 'https://static.wixstatic.com/media/fe81a7_48d79c36bee646c296b9274c4c377627~mv2.png', stigma: 'DESCONEXIÓN', goodVibe: 'Calma y Serenidad', savior: 'Humulene' },
-            { id: 3, name: 'Terpinolene', color: '#800080', img: 'https://static.wixstatic.com/media/fe81a7_c5013ac9ba024fbfae403e004c3efca5~mv2.png', stigma: 'APATÍA', goodVibe: 'Creatividad Compleja', savior: 'Alpha-Pinene' },
-            { id: 4, name: 'Humulene', color: '#FFA500', img: 'https://static.wixstatic.com/media/fe81a7_832d0d4530dd429d9acd879284f0cb62~mv2.png', stigma: 'AGITACIÓN', goodVibe: 'Supresión y Balance', savior: 'Caryophyllene' },
-            { id: 5, name: 'Caryophyllene', color: '#FF0000', img: 'https://static.wixstatic.com/media/fe81a7_76aac2a2b0d54f7d899ffd282017b7b6~mv2.png', stigma: 'GLOTONERÍA', goodVibe: 'Alivio y Protección', savior: 'Myrcene' },
-            { id: 6, name: 'Alpha-Pinene', color: '#40E0D0', img: 'https://static.wixstatic.com/media/fe81a7_2f497473537a4ccc9dbcd5a2e614833e~mv2.png', stigma: 'ANSIEDAD', goodVibe: 'Alerta y Enfoque', savior: 'Linalool' },
-            { id: 7, name: 'Beta-Pinene', color: '#228B22', img: 'https://static.wixstatic.com/media/fe81a7_08e377f499ef4f478652177dbf120b04~mv2.png', stigma: 'SOBREPENSAR', goodVibe: 'Memoria a Corto Plazo', savior: 'Terpinolene' }
-        ];
-
-        function getTerpeneColor(name) { return (TERPENES.find(t => t.name === name) || TERPENES[0]).color; }
-
-        const TRIVIA_QUESTIONS = [
-            { q: "Llegas del trabajo exhausto y no puedes dormir por la tensión. ¿Qué terpeno necesitas?", correct: 0, wrong: 1 }, 
-            { q: "Tienes un ataque de pánico antes de una presentación. ¿Cuál te da calma instantánea?", correct: 2, wrong: 3 }, 
-            { q: "Amaneciste sin ganas de hacer nada. Necesitas un boost de energía y alegría.", correct: 1, wrong: 5 }, 
-            { q: "Te duelen las articulaciones después del gimnasio. ¿Cuál es el mejor antiinflamatorio?", correct: 5, wrong: 6 }, 
-            { q: "Tienes que estudiar para un examen y necesitas foco absoluto. ¿Qué terpeno buscas?", correct: 6, wrong: 2 }, 
-            { q: "Estás perdiendo el apetito y necesitas estimularlo naturalmente.", correct: 4, wrong: 7 }, 
-            { q: "Buscas un efecto ligeramente sedante pero con un sabor sumamente complejo.", correct: 3, wrong: 1 }, 
-            { q: "Necesitas alerta mental y mejorar la retención de memoria a corto plazo.", correct: 7, wrong: 0 } 
-        ];
-
-        const loadedImages = {};
-        function preloadAssets() {
-            const allSrcs = [ASSETS.stigmaLogo, ASSETS.highcoon, ...ASSETS.clouds, ...TERPENES.map(t => t.img)];
-            allSrcs.forEach(src => { let img = new Image(); img.src = src; loadedImages[src] = img; });
+        // Lógica de Récord
+        let isNewRecord = false;
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('sgx_pincho_hs', highScore);
+            isNewRecord = true;
         }
-        preloadAssets();
 
-        function initGlossary() {
-            const container = document.getElementById('glossary-content');
-            TERPENES.forEach(t => {
-                const card = document.createElement('div');
-                card.className = 'terpene-card';
-                card.onmouseover = () => card.style.boxShadow = `0 0 15px ${t.color}`;
-                card.onmouseout = () => card.style.boxShadow = `none`;
-                card.style.borderLeft = `4px solid ${t.color}`;
+        document.getElementById('result-score').innerText = score;
+        document.getElementById('result-highscore').innerText = highScore;
+        document.getElementById('result-time').innerText = timeStr;
+        
+        const msgEl = document.getElementById('motivation-msg');
+        if (isNewRecord) {
+            msgEl.innerText = "¡NUEVO RÉCORD ESTABLECIDO!";
+            msgEl.style.color = "var(--sgx-cyan)";
+        } else {
+            msgEl.innerText = "La orden casi sale, ¿te tiras otra?";
+            msgEl.style.color = "#ccc";
+        }
+
+        uiResult.classList.remove('hidden');
+    }
+
+    function update() {
+        if (gameState !== 'PLAYING') return;
+        frame++;
+        
+        // La dificultad escala infinitamente
+        if (frame % Math.max(20, 70 - Math.floor(score * 4)) === 0) spawnItem();
+        gameSpeed = 1 + (score * 0.12); 
+
+        for (let i = fallingItems.length - 1; i >= 0; i--) {
+            let item = fallingItems[i];
+            item.y += item.speed;
+
+            const hitX = Math.abs(item.x - stick.x) < 30;
+            const hitY = Math.abs((item.y + item.size/2) - stick.catchY) < 20;
+
+            if (hitX && hitY) {
+                stick.stacked.push(item.type);
+                stick.catchY += 28; 
+                fallingItems.splice(i, 1);
                 
-                card.innerHTML = `
-                    <img src="${t.img}" alt="${t.name}">
-                    <div style="flex:1;">
-                        <h3 style="color:${t.color}">${t.name}</h3>
-                        <p><strong>Aporta:</strong> ${t.goodVibe}</p>
-                        <p><strong>Causa (Stigma):</strong> ${t.stigma}</p>
-                        <span class="t-savior" style="color: ${getTerpeneColor(t.savior)};">Vencido por: ${t.savior}</span>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-        initGlossary();
-
-        // ==========================================
-        // AUDIO & FEEDBACK SYSTEM GLOBAL
-        // ==========================================
-        function startEcosystem() {
-            const bgm = document.getElementById('bg-music');
-            bgm.volume = 0.15; 
-            bgm.play().catch(e => console.log("Auto-play prevented"));
-            showScreen('screen-menu');
-        }
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playGameSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            if (type === 'correct') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            } else {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            }
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-
-        // ==========================================
-        // 2. STATE MACHINE Y UTILIDADES
-        // ==========================================
-        let currentGameInterval = null;
-        let gameLoopId = null;
-        let currentScore = 0;
-        let currentGameName = "";
-        let currentType = "";
-
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-            clearInterval(currentGameInterval);
-            cancelAnimationFrame(gameLoopId);
-
-            if(screenId === 'screen-harvest' || screenId === 'screen-smokeout') {
-                document.getElementById('bg-clouds-container').style.display = 'none'; 
-            } else {
-                document.getElementById('bg-clouds-container').style.display = 'block'; 
-            }
-        }
-
-        function updateLives(elementId, lives) {
-            document.getElementById(elementId).innerText = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
-        }
-
-        function triggerGameOver(gameName, score) {
-            currentGameName = gameName;
-            currentScore = score;
-            showScreen('screen-gameover');
-            document.getElementById('go-title').innerText = gameName;
-            document.getElementById('go-score').innerText = score;
-        }
-
-        function replayGame() { startGame(currentType); }
-
-        function shareScore() {
-            const text = `¡Logré ${currentScore} puntos en ${currentGameName} de In The Cloud x Highcoon! 🦝☁️`;
-            if (navigator.share) { navigator.share({ title: 'Highcade', text: text, url: CONFIG.shareUrl });
-            } else { navigator.clipboard.writeText(`${text} Juega aquí: ${CONFIG.shareUrl}`); alert("¡Enlace copiado!"); }
-        }
-
-        function initGlobalClouds() {
-            const container = document.getElementById('bg-clouds-container');
-            setInterval(() => {
-                const isGame = document.getElementById('screen-harvest').classList.contains('active') || document.getElementById('screen-smokeout').classList.contains('active');
-                if(isGame) return; 
-                
-                const cloud = document.createElement('img');
-                cloud.src = ASSETS.clouds[Math.floor(Math.random() * ASSETS.clouds.length)];
-                cloud.className = 'menu-cloud';
-                cloud.style.top = Math.random() * 60 + '%';
-                cloud.style.width = (150 + Math.random() * 200) + 'px';
-                const duration = 30 + Math.random() * 20; 
-                cloud.style.animationDuration = duration + 's';
-                
-                container.appendChild(cloud);
-                setTimeout(() => { if(container.contains(cloud)) cloud.remove(); }, duration * 1000);
-            }, 3000);
-        }
-        initGlobalClouds();
-
-        function startGame(type) {
-            currentType = type;
-            if(type === 'SMOKEOUT') startSmokeOut();
-            if(type === 'HARVEST') startHarvest();
-            if(type === 'TRIVIA') startTrivia();
-        }
-
-        // ==========================================
-        // 3. GAME 1: PUFF OUT THE STIGMA
-        // ==========================================
-        function startSmokeOut() {
-            showScreen('screen-smokeout');
-            const area = document.getElementById('smokeout-area');
-            area.innerHTML = '';
-            let score = 0, lives = 3, time = 60;
-            
-            document.getElementById('so-score').innerText = score;
-            document.getElementById('so-time').innerText = time;
-            updateLives('so-lives', lives);
-
-            currentGameInterval = setInterval(() => {
-                time--; document.getElementById('so-time').innerText = time;
-                if(time <= 0) { triggerGameOver("PUFF OUT THE STIGMA", score); return; }
-
-                if(Math.random() > 0.35) spawnTintedCloud(area);
-                else spawnStigmaLogo(area);
-            }, 1000);
-
-            function spawnTintedCloud(container) {
-                const terpeneTarget = TERPENES[Math.floor(Math.random() * TERPENES.length)];
-                const terpeneSavior = TERPENES.find(t => t.name === terpeneTarget.savior);
-                const cloudImg = ASSETS.clouds[Math.floor(Math.random() * ASSETS.clouds.length)];
-                
-                const el = document.createElement('div');
-                el.className = 'cloud-target';
-                el.style.left = Math.random() * 70 + '%';
-                el.style.top = 20 + Math.random() * 60 + '%';
-                el.innerText = terpeneTarget.stigma; 
-
-                const mask = document.createElement('div');
-                mask.className = 'cloud-mask';
-                mask.style.webkitMaskImage = `url('${cloudImg}')`;
-                mask.style.backgroundColor = terpeneTarget.color;
-                el.appendChild(mask);
-
-                el.ontouchstart = el.onmousedown = (e) => {
-                    e.preventDefault();
-                    playGameSound('correct'); 
-                    score += 10; document.getElementById('so-score').innerText = score;
-                    showFloatText(container, el.style.left, el.style.top, `¡${terpeneSavior.name} venció esto!`, terpeneSavior.color);
-                    el.remove();
-                };
-
-                container.appendChild(el);
-                setTimeout(() => { if(container.contains(el)) el.remove(); }, 2500);
-            }
-
-            function spawnStigmaLogo(container) {
-                const el = document.createElement('div');
-                el.className = 'stigma-hazard';
-                el.style.left = Math.random() * 80 + '%';
-                el.style.top = 20 + Math.random() * 60 + '%';
-
-                el.ontouchstart = el.onmousedown = (e) => {
-                    e.preventDefault();
-                    playGameSound('wrong'); 
-                    lives--; updateLives('so-lives', lives);
-                    showFloatText(container, el.style.left, el.style.top, "-1 VIDA", "var(--stigma-red)");
-                    el.remove();
-                    if(lives <= 0) triggerGameOver("PUFF OUT THE STIGMA", score);
-                };
-
-                container.appendChild(el);
-                setTimeout(() => { if(container.contains(el)) el.remove(); }, 2000);
-            }
-
-            function showFloatText(container, x, y, text, color) {
-                const f = document.createElement('div');
-                f.className = 'pop-text';
-                f.innerText = text;
-                f.style.left = x; f.style.top = y; f.style.color = color;
-                container.appendChild(f);
-                setTimeout(() => f.remove(), 1000);
-            }
-        }
-
-        // ==========================================
-        // 4. GAME 2: TERPENE HARVEST
-        // ==========================================
-        function startHarvest() {
-            showScreen('screen-harvest');
-            const canvas = document.getElementById('canvas-harvest');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            
-            let score = 0, lives = 3, time = 60;
-            document.getElementById('ha-score').innerText = score;
-            document.getElementById('ha-time').innerText = time;
-            updateLives('ha-lives', lives);
-
-            let player = { x: canvas.width/2 - 52, y: canvas.height - 180, w: 104, h: 104, targetX: canvas.width/2 - 52 };
-            let items = [];
-            let lastSpawn = Date.now();
-            let popTexts = [];
-
-            canvas.ontouchmove = (e) => player.targetX = e.touches[0].clientX - player.w/2;
-            canvas.onmousemove = (e) => player.targetX = e.clientX - player.w/2;
-
-            currentGameInterval = setInterval(() => {
-                time--; document.getElementById('ha-time').innerText = time;
-                if(time <= 0) triggerGameOver("TERPENE HARVEST", score);
-            }, 1000);
-
-            function harvestLoop() {
-                if(!document.getElementById('screen-harvest').classList.contains('active')) return;
-                
-                ctx.clearRect(0, 0, canvas.width, canvas.height); 
-                
-                player.x += (player.targetX - player.x) * 0.3;
-                if(player.x < 0) player.x = 0; if(player.x > canvas.width - player.w) player.x = canvas.width - player.w;
-                
-                if(loadedImages[ASSETS.highcoon]) {
-                    ctx.drawImage(loadedImages[ASSETS.highcoon], player.x, player.y, player.w, player.h);
+                if (stick.stacked.length >= 5) {
+                    score++;
+                    scoreEl.innerText = score;
+                    stick.stacked = [];
+                    stick.catchY = stick.y;
+                    
+                    document.body.style.backgroundColor = 'rgba(253, 204, 13, 0.2)';
+                    setTimeout(() => document.body.style.backgroundColor = 'var(--bg-color)', 100);
                 }
+            } else if (item.y > h) {
+                lives--;
+                livesEl.innerText = lives;
+                fallingItems.splice(i, 1);
 
-                if(Date.now() - lastSpawn > 1200) {
-                    let isHazard = Math.random() > 0.8;
-                    items.push({
-                        x: Math.random() * (canvas.width - 60), y: 120, size: 60, 
-                        speed: 1.5 + Math.random() * 1.5, 
-                        isHazard: isHazard,
-                        data: isHazard ? null : TERPENES[Math.floor(Math.random() * TERPENES.length)]
-                    });
-                    lastSpawn = Date.now();
-                }
+                document.body.style.backgroundColor = 'rgba(255, 0, 85, 0.3)';
+                setTimeout(() => document.body.style.backgroundColor = 'var(--bg-color)', 100);
 
-                // BOUNDARY BOX REDUCIDO PARA LA CABEZA DE HIGHCOON
-                let hitboxX = player.x + 25;
-                let hitboxY = player.y + 30;
-                let hitboxW = player.w - 50;
-
-                for(let i = items.length - 1; i >= 0; i--) {
-                    let it = items[i];
-                    it.y += it.speed;
-                    
-                    ctx.save();
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = it.isHazard ? 'red' : it.data.color;
-                    
-                    let imgToDraw = it.isHazard ? loadedImages[ASSETS.stigmaLogo] : loadedImages[it.data.img];
-                    if(imgToDraw) ctx.drawImage(imgToDraw, it.x, it.y, it.size, it.size);
-                    ctx.restore();
-
-                    // VALIDACIÓN DE COLISIÓN USANDO EL HITBOX REDUCIDO
-                    if(it.y + it.size > hitboxY && it.x < hitboxX + hitboxW && it.x + it.size > hitboxX) {
-                        if(it.isHazard) {
-                            playGameSound('wrong');
-                            lives--; updateLives('ha-lives', lives);
-                            popTexts.push({x: player.x, y: player.y, text: "-1 Vida!", color: "red", life: 1.0});
-                        } else {
-                            playGameSound('correct');
-                            score += 10; document.getElementById('ha-score').innerText = score;
-                            popTexts.push({x: player.x, y: player.y, text: `+${it.data.name}`, color: it.data.color, life: 1.0});
-                        }
-                        items.splice(i, 1);
-                        if(lives <= 0) { triggerGameOver("TERPENE HARVEST", score); return; }
-                    } else if (it.y > canvas.height) {
-                        if(!it.isHazard) {
-                            playGameSound('wrong');
-                            lives--; updateLives('ha-lives', lives);
-                            if(lives <= 0) { triggerGameOver("TERPENE HARVEST", score); return; }
-                        }
-                        items.splice(i, 1);
-                    }
-                }
-
-                for(let i = popTexts.length - 1; i >= 0; i--) {
-                    let pt = popTexts[i];
-                    ctx.save();
-                    ctx.fillStyle = pt.color; ctx.font = "900 22px Orbitron";
-                    ctx.lineWidth = 1; 
-                    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-                    
-                    ctx.shadowColor = "rgba(0,0,0,0.8)";
-                    ctx.shadowBlur = 3;
-                    ctx.shadowOffsetX = 1;
-                    ctx.shadowOffsetY = 1;
-                    
-                    ctx.strokeText(pt.text, pt.x, pt.y - (1 - pt.life)*50);
-                    ctx.fillText(pt.text, pt.x, pt.y - (1 - pt.life)*50);
-                    ctx.restore();
-                    
-                    pt.life -= 0.02;
-                    if(pt.life <= 0) popTexts.splice(i, 1);
-                }
-
-                gameLoopId = requestAnimationFrame(harvestLoop);
+                if (lives <= 0) endGame();
             }
-            harvestLoop();
         }
+    }
 
-        // ==========================================
-        // 5. GAME 3: HIGH-Q TRIVIA
-        // ==========================================
-        function startTrivia() {
-            showScreen('screen-trivia');
-            let qIndex = 0; let score = 0; let time = 60;
-            const container = document.getElementById('answers-container');
-            const qText = document.getElementById('question-text');
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
 
-            document.getElementById('tr-score').innerText = score;
-            document.getElementById('tr-time').innerText = time;
+        if (gameState === 'PLAYING') {
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(stick.x - stick.w/2, stick.y, stick.w, stick.h);
 
-            currentGameInterval = setInterval(() => {
-                time--; document.getElementById('tr-time').innerText = time;
-                if(time <= 0) { triggerGameOver("HIGH-Q TRIVIA", score * 100); return; }
-            }, 1000);
-
-            function loadQuestion() {
-                if(qIndex >= TRIVIA_QUESTIONS.length) {
-                    triggerGameOver("HIGH-Q TRIVIA", score * 100);
-                    return;
-                }
-                
-                const currentQ = TRIVIA_QUESTIONS[qIndex];
-                qText.innerText = currentQ.q;
-                container.innerHTML = '';
-                container.style.pointerEvents = 'auto'; 
-
-                let opts = [TERPENES[currentQ.correct], TERPENES[currentQ.wrong]].sort(() => Math.random() - 0.5);
-
-                opts.forEach(t => {
-                    let btn = document.createElement('div');
-                    btn.className = 'pill-btn';
-                    btn.dataset.id = t.id; 
-                    btn.innerHTML = `<img src="${t.img}" alt="${t.name}"> <span>${t.name}</span>`;
-                    
-                    btn.onclick = () => {
-                        container.style.pointerEvents = 'none'; 
-                        
-                        if(t.id === currentQ.correct) {
-                            btn.classList.add('correct');
-                            playGameSound('correct');
-                            score++; document.getElementById('tr-score').innerText = score;
-                        } else {
-                            btn.classList.add('wrong');
-                            playGameSound('wrong');
-                            Array.from(container.children).forEach(child => {
-                                if(parseInt(child.dataset.id) === currentQ.correct) {
-                                    child.classList.add('correct');
-                                }
-                            });
-                        }
-
-                        setTimeout(() => {
-                            qIndex++;
-                            loadQuestion();
-                        }, 1000); 
-                    };
-                    container.appendChild(btn);
-                });
+            ctx.font = '45px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            for (let i = 0; i < stick.stacked.length; i++) {
+                ctx.fillText(stick.stacked[i], stick.x, stick.y + 25 + (i * 28));
             }
-            loadQuestion();
-        }
 
-    </script>
+            for (let item of fallingItems) {
+                ctx.fillText(item.type, item.x, item.y);
+            }
+        }
+        update();
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
 </body>
 </html>
