@@ -150,7 +150,7 @@
         <div class="glass-panel">
             <h1>CASCARITAS PINCHOS</h1>
             <h2>x SPATIALGINEERS</h2>
-            <p>Mueve el palito, atrapa los ingredientes y no dejes que caigan al piso.<br><br>¿Cuántos puedes armar antes de que salga tu orden?</p>
+            <p>Mueve el palito y atrapa los ingredientes con la PUNTA.<br><br>¿Cuántos puedes armar antes de que salga tu orden?</p>
             <div class="stat-box" id="menu-highscore">RÉCORD LOCAL: 0</div>
             <button class="sgx-btn" onclick="startGame()">Comenzar</button>
             <div class="footer">POWERED BY SGX ENGINE</div>
@@ -189,12 +189,12 @@
     let w, h, frame = 0, score = 0, lives = 3, gameSpeed = 1, gameState = 'MENU';
     let startTime = 0;
 
-    // Persistencia de High Score con Namespace del Negocio
     let highScore = localStorage.getItem('cascaritas_sgx_hs') || 0;
     document.getElementById('menu-highscore').innerText = `RÉCORD LOCAL: ${highScore}`;
 
     const ingredients = ['🥩', '🍗', '🍞', '🧅', '🧄'];
-    const stick = { x: 0, y: 0, w: 8, h: 180, catchY: 0, stacked: [] };
+    // Eliminado catchY, ya no lo necesitamos.
+    const stick = { x: 0, y: 0, w: 8, h: 180, stacked: [] };
     let fallingItems = [];
 
     function resize() {
@@ -202,7 +202,6 @@
         h = canvas.height = window.innerHeight;
         stick.x = w / 2;
         stick.y = h - 220;
-        stick.catchY = stick.y;
     }
     window.addEventListener('resize', resize);
     resize();
@@ -219,7 +218,6 @@
             x: Math.random() * (w - 60) + 30,
             y: -50,
             type: ingredients[Math.floor(Math.random() * ingredients.length)],
-            // Velocidad base más lenta (2.0 a 3.5)
             speed: (2.0 + Math.random() * 1.5) * gameSpeed, 
             size: 45
         });
@@ -232,7 +230,6 @@
         gameSpeed = 1;
         fallingItems = [];
         stick.stacked = [];
-        stick.catchY = stick.y;
         startTime = Date.now();
         
         scoreEl.innerText = score;
@@ -280,30 +277,26 @@
         if (gameState !== 'PLAYING') return;
         frame++;
         
-        // Frecuencia de aparición más espaciada inicialmente (cada 90 frames en vez de 70)
-        // La curva de compresión ahora es menos agresiva
         if (frame % Math.max(35, 90 - Math.floor(score * 2)) === 0) spawnItem();
-        
-        // Multiplicador de gravedad reducido (de 0.12 a 0.05) para prolongar el tiempo de sesión
         gameSpeed = 1 + (score * 0.05); 
 
         for (let i = fallingItems.length - 1; i >= 0; i--) {
             let item = fallingItems[i];
             item.y += item.speed;
 
+            // HITBOX ESTÁTICO: Siempre calcula contra la punta del palito (stick.y)
             const hitX = Math.abs(item.x - stick.x) < 30;
-            const hitY = Math.abs((item.y + item.size/2) - stick.catchY) < 20;
+            const hitY = Math.abs((item.y + item.size/2) - stick.y) < 25;
 
             if (hitX && hitY) {
-                stick.stacked.push(item.type);
-                stick.catchY += 28; 
+                // UNSHIFT: Mete el ingrediente al principio de la lista, empujando los demás hacia abajo.
+                stick.stacked.unshift(item.type);
                 fallingItems.splice(i, 1);
                 
                 if (stick.stacked.length >= 5) {
                     score++;
                     scoreEl.innerText = score;
                     stick.stacked = [];
-                    stick.catchY = stick.y;
                     
                     document.body.style.backgroundColor = 'rgba(253, 204, 13, 0.2)';
                     setTimeout(() => document.body.style.backgroundColor = 'var(--bg-color)', 100);
@@ -325,6 +318,7 @@
         ctx.clearRect(0, 0, w, h);
 
         if (gameState === 'PLAYING') {
+            // Dibujar el palito
             ctx.fillStyle = '#654321';
             ctx.fillRect(stick.x - stick.w/2, stick.y, stick.w, stick.h);
 
@@ -332,6 +326,7 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
+            // Dibujar ingredientes (Como usamos unshift, el index 0 siempre se dibuja en la punta)
             for (let i = 0; i < stick.stacked.length; i++) {
                 ctx.fillText(stick.stacked[i], stick.x, stick.y + 25 + (i * 28));
             }
